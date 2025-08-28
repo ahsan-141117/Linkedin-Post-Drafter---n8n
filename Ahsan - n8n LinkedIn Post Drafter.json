@@ -1,0 +1,680 @@
+{
+  "name": "LinkedIn Post Drafter",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "ahsanhummayoun2006@gmail.com",
+        "subject": "LinkedIn Post Draft Approval",
+        "message": "=Hi Manager,\n\nA new LinkedIn post draft is ready for approval.\n\nTitle: {{$node[\"RSS Feed Trigger\"].json[\"title\"]}}  \nLink: {{$node[\"RSS Feed Trigger\"].json[\"link\"]}}\n\n---\n\nDraft Post:  \n{{$node[\"Basic LLM Chain\"].json[\"text\"]}}\n\n---\n\nPlease review and respond with one of the following options:\n- Reply with APPROVE to accept and publish this post as is.  \n- Reply with REJECT to have a new draft generated for your review.\n\n[Optional: You can also leave specific feedback or edits if you want changes.]\n\nThanks!\n",
+        "responseType": "freeText",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        944,
+        376
+      ],
+      "id": "14144e8f-c4fb-44d2-bbfa-6d1d25f62132",
+      "name": "Send a message",
+      "webhookId": "79081f5a-b711-45fe-8b60-3ea97f78faf3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GBzzLQQQKDGAyqvs",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "person": "o1ixAY8S7W",
+        "text": "={{$node[\"Basic LLM Chain\"].json[\"text\"]}}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        1616,
+        692
+      ],
+      "id": "d598cd3a-13f0-4f72-b818-5de5fcfa09e8",
+      "name": "Create a post",
+      "retryOnFail": true,
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "BgyBJNSgXTl5xwC7",
+          "name": "LinkedIn account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "feedUrl": "https://www.youtube.com/feeds/videos.xml?channel_id=UC81ag-lWVzu1Dq19LGd_Sfg"
+      },
+      "type": "n8n-nodes-base.rssFeedReadTrigger",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        596
+      ],
+      "id": "40857b48-5e78-4080-8ff7-34037db580ca",
+      "name": "RSS Feed Trigger"
+    },
+    {
+      "parameters": {
+        "model": "microsoft/mai-ds-r1:free",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        576,
+        496
+      ],
+      "id": "109468e4-1049-415a-a870-6e1f4bda1757",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "oEcMc66ONATJEJP6",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {
+          "includeUnpaired": true
+        }
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        96,
+        596
+      ],
+      "id": "7f9f2147-b0c0-4cac-9a1d-afd433180ea7",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=# System prompt\n- role: system\n  content: |\n    You are a professional social media writer.\n    When asked, you only output a LinkedIn post body—never a disclaimer,\n    never follow‑up questions, never instructions to consult a doctor.\n    Always use a professional, engaging tone.\n\n# User prompt\n- role: user\n  content: |\n    Write a LinkedIn post that announces this new video to our followers. Link the video in the post as well.\n    Use a professional and engaging tone.\n\n    Here are the video details:\n    - Title: {{$node[\"RSS Feed Trigger\"].json[\"title\"]}}\n    - Link: {{$node[\"RSS Feed Trigger\"].json[\"link\"]}}\n\n    {{ $json.data.text\n       ? \"\\n\\nThe manager provided the following feedback for this draft:\\n\" + $json.data.text\n       : \"\" }}\n\n    Do not include any other content in the output apart from the post’s body content.\n",
+        "needsFallback": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        544,
+        272
+      ],
+      "id": "486bf79b-4ee7-4332-ae59-66c5dfd8c738",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "google/gemma-2-9b-it:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        704,
+        496
+      ],
+      "id": "df710072-6ea6-42bc-bb18-07a055426c6b",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "oEcMc66ONATJEJP6",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1-eoMT40-j14nb6plXqAKnEIQj3pOlQJX36zYZHMvwvU",
+          "mode": "list",
+          "cachedResultName": "n8n LinkedIn Post Drafter",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-eoMT40-j14nb6plXqAKnEIQj3pOlQJX36zYZHMvwvU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-eoMT40-j14nb6plXqAKnEIQj3pOlQJX36zYZHMvwvU/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Title": "={{$node[\"RSS Feed Trigger\"].json[\"title\"]}}",
+            "Link": "={{$node[\"RSS Feed Trigger\"].json[\"link\"]}}",
+            "Post": "={{$node[\"Basic LLM Chain\"].json[\"text\"]}}",
+            "Status": "Published"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Link",
+              "displayName": "Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Post",
+              "displayName": "Post",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        2064,
+        596
+      ],
+      "id": "495843e6-f3dd-4e3f-ad8f-a3ecace53710",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "VXd86Pw6Q60ATQWw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "errorMessage": "=LinkedIn post creation failed for video: {{$node[\"RSS Feed Trigger\"].json[\"title\"]}}"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        2288,
+        788
+      ],
+      "id": "26184286-843e-4189-b246-6da29ff3dc6f",
+      "name": "Stop and Error"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1-eoMT40-j14nb6plXqAKnEIQj3pOlQJX36zYZHMvwvU",
+          "mode": "list",
+          "cachedResultName": "n8n LinkedIn Post Drafter",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-eoMT40-j14nb6plXqAKnEIQj3pOlQJX36zYZHMvwvU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-eoMT40-j14nb6plXqAKnEIQj3pOlQJX36zYZHMvwvU/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Title": "={{$node[\"RSS Feed Trigger\"].json[\"title\"]}}",
+            "Link": "={{$node[\"RSS Feed Trigger\"].json[\"link\"]}}",
+            "Post": "={{$node[\"Basic LLM Chain\"].json[\"text\"]}}",
+            "Status": "Not Published"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Link",
+              "displayName": "Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Post",
+              "displayName": "Post",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        2064,
+        788
+      ],
+      "id": "4c39951d-0bbe-4582-b89d-1ec31564c8db",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "VXd86Pw6Q60ATQWw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "errorMessage": "Title and Link of the video could not be fetched."
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        632,
+        672
+      ],
+      "id": "a827a941-fceb-412f-9977-5a0abd508181",
+      "name": "Stop and Error1"
+    },
+    {
+      "parameters": {
+        "errorMessage": "Email could not be sent to the manager"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        328
+      ],
+      "id": "33151f27-674e-46fb-bcfb-6d2bf53f4d9d",
+      "name": "Stop and Error2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "db0bbdbd-f2ac-4c5e-97db-6d51c5020796",
+              "leftValue": "title",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "c7fcd6c4-b966-4907-9007-94b0da110949",
+              "leftValue": "link",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        320,
+        524
+      ],
+      "id": "36c9b2cb-1137-403a-983e-36e26709691d",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5f3fa420-c762-42e1-b988-7b1f3354136d",
+              "leftValue": "urn",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1840,
+        692
+      ],
+      "id": "7bf7ec39-d549-4950-8d8e-ec86c9121b7c",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "dd940ee4-768e-4763-920a-83bd810c2670",
+              "leftValue": "={{$json[\"error\"] === undefined}}\n",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1168,
+        376
+      ],
+      "id": "9dd949f1-8396-460d-9977-6062f6e725a8",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9fdcf2cb-e486-4374-85ee-b753b61c7854",
+              "leftValue": "={{$json.data.text}}",
+              "rightValue": "APPROVE",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1392,
+        692
+      ],
+      "id": "2def81a2-1ce1-4e7c-a4f9-08d31fbbc901",
+      "name": "If2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Feed Trigger": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Create a post": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop and Error1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop and Error2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Create a post",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "9PaRBC4yxsp8Jypk"
+  },
+  "versionId": "9758a071-429e-43c3-a187-edfd43dd0f3a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7bc50f428589f30ba9e8dea22648d5b21371dbf29a247364f4c5cdaaced84196"
+  },
+  "id": "JrArCUhYSfmvUYnt",
+  "tags": []
+}
