@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+title: LinkedIn Post Drafter - n8n 
+message: If you use this software, please cite it.
+type: software
+
+authors:
+  - family-names: Hummayoun
+    given-names: Mohammad Ahsan
+    orcid: ""
+    affiliation: ""
+
+version: 1.0.0
+date-released: 2025-08-28
+repository-code: https://github.com/ahsan-141117/Linkedin-Post-Drafter---n8n
+
+preferred-citation:
+  type: software
+  title: LinkedIn Post Drafter - n8n 
+  authors:
+    - family-names: Hummayoun
+      given-names: Mohammad Ahsan
+  year: 2025
+  url: https://github.com/ahsan-141117/Linkedin-Post-Drafter---n8n
